@@ -1,0 +1,104 @@
+﻿@page "/createvehicle/"
+@inject HttpClient _client
+@inject IJSRuntime js
+@attribute [Authorize]
+
+<h3 class="card-title">Car Vehicles</h3>
+<a href="/createvehicle/create" class="btn btn-secondary">
+    <span class="oi oi-plus"></span>
+    Create New Vehicle
+</a>
+<br />
+<br />
+<div class="form-group">
+    @* Search bar to search for vehicles *@
+    <label>Search: </label>
+    <div>
+        <InputText @bind-Value="@keyword" class="form-control" />
+    </div>
+</div>
+@if (Vehicles == null)
+{
+    <div class="alert alert-info">Loading Vehicles...</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Brand</th>
+                <th>Model</th>
+                <th>Colour</th>
+                <th>Outlet Address</th>
+                <th>License Plate Number</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var vehicle in Vehicles)
+            {
+                if (vehicle.ModelColour.Model.Brand.BrandName.ToLower().Contains(keyword) || vehicle.ModelColour.Model.ModelName.ToLower().Contains(keyword) || vehicle.ModelColour.MCName.ToLower().Contains(keyword) || vehicle.Outlet.OutletAddress.ToLower().Contains(keyword) || vehicle.VehPlateNum.ToLower().Contains(keyword))
+                {
+                <tr>
+                    <td>
+                    @if (vehicle.ModelColour.MCImgSide==null)
+                    {
+                        <img src="Images/noimg.jpeg" alt="Image Unavailable" height="50" width="auto">
+                    }
+                    else
+                    {
+                        <img src="Images/@vehicle.ModelColour.MCImgSide" alt="@vehicle.ModelColour.MCImgSide" height="50" width="auto">
+                    }
+                    </td>
+                    <td>@vehicle.ModelColour.Model.Brand.BrandName</td>
+                    <td>@vehicle.ModelColour.Model.ModelName</td>
+                    <td>@vehicle.ModelColour.MCName</td>
+                    <td>@vehicle.Outlet.OutletAddress</td>
+                    <td>@vehicle.VehPlateNum</td>
+                    <td>
+                        <a href="/createvehicle/view/@vehicle.ID" class="btn btn-primary">
+                            <span class="oi oi-book"></span>
+                        </a>
+                        <a href="/createvehicle/edit/@vehicle.ID" class="btn btn-warning">
+                            <span class="oi oi-pencil"></span>
+                        </a>
+                        <button class="btn btn-danger" @onclick="@(()=>Delete(vehicle.ID))">
+                            <span class="oi oi-delete"></span>
+                        </button>
+                    </td>
+                </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+    private List<Vehicle>? Vehicles;
+    private string defaultimg = "noimg.jpeg";
+    private string keyword = "";
+
+    protected async override Task OnInitializedAsync()
+    {
+        Vehicles = await _client.GetFromJsonAsync<List<Vehicle>>($"{Endpoints.VehiclesEndpoint}");
+    }
+
+    async Task Delete(int vehicleID)
+    {
+        if (Vehicles != null)
+        {
+            var vehicle = Vehicles.First(q => q.ID == vehicleID);
+
+            var confirm = await js.InvokeAsync<bool>("confirm", $"Do you want to delete {vehicle.VehPlateNum}?");
+
+            if (confirm)
+            {
+                await _client.DeleteAsync($"{Endpoints.VehiclesEndpoint}/{vehicleID}");
+                await OnInitializedAsync();
+            }
+        }
+    }
+}
+

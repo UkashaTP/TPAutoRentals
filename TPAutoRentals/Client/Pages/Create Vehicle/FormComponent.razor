@@ -1,0 +1,122 @@
+﻿@inject HttpClient _client
+
+<EditForm Model="@vehicle" OnValidSubmit="@OnValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    @if(vehicle != null)
+    {
+        <fieldset disabled="@Disabled">
+            <div class="form-group">
+                <label>Model Colour: </label>
+                <div>
+                    <InputSelect @bind-Value="vehicle.MCID" class="form-control">
+                        <option value="">-- Select Model Colour --</option>
+                        @if (ModelColours != null)
+                        {
+                            foreach (var modelcolour in ModelColours)
+                            {
+                                if (modelcolour.Model != null)
+                                {
+                                    if (modelcolour.MCName != null && modelcolour.Model.Brand != null)
+                                    {
+                                        <option value="@modelcolour.ID">@(modelcolour.MCName + " - " + modelcolour.Model.Brand.BrandName + " " + modelcolour.Model.ModelName)</option>
+                                    }
+                                }
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => vehicle.MCID)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Outlet: </label>
+                <div>
+                    <InputSelect @bind-Value="vehicle.OutletID" class="form-control">
+                        <option value="">-- Select Outlet --</option>
+                        @if (Outlets != null)
+                        {
+                            foreach (var outlet in Outlets)
+                            {
+                                <option value="@outlet.ID">@(outlet.OutletAddress)</option>
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => vehicle.OutletID)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Vehicle Availability: </label>
+                <div>
+                    <InputSelect @bind-Value="vehicle.VehAvailability" class="form-control">
+                        <option value="">-- Set Availability --</option>
+                        <option value="True">True</option>
+                        <option value="False">False</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => vehicle.VehAvailability)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>License Plate: </label>
+                <div>
+                    <InputText @bind-Value="@vehicle.VehPlateNum" class="form-control" />
+                    <ValidationMessage For="@(() => vehicle.VehPlateNum)" />
+                </div>
+            </div>
+        </fieldset>
+    }
+
+    @if (!Disabled)
+    {
+        <button type="submit" class="btn btn-success btn-block">
+            @ButtonText
+        </button>
+    }
+    <BackToList Target="createvehicle"/>
+</EditForm>
+
+@code {
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public Vehicle? vehicle { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Save";
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+
+    private IList<ModelColour>? ModelColours;
+    private IList<Outlet>? Outlets;
+
+    protected async override Task OnInitializedAsync()
+    {
+        ModelColours = await _client.GetFromJsonAsync<List<ModelColour>>($"{Endpoints.ModelColoursEndpoint}");
+        Outlets = await _client.GetFromJsonAsync<List<Outlet>>($"{Endpoints.OutletsEndpoint}");
+    }
+
+    private List<Staff>? Staffs;
+
+    private string? staffusername;
+    private string? staffpassword;
+    private bool showError = false;
+    private bool staffisvalid = false;
+
+
+    private void CheckValidation()
+    {
+
+        if (Staffs != null)
+        {
+            foreach (var staff in Staffs)
+            {
+                if (staffusername == staff.StaffName && staffpassword == staff.StaffPassword)
+                {
+                    staffisvalid = true;
+                }
+                else
+                {
+                    showError = true;
+                }
+            }
+        }
+    }
+}

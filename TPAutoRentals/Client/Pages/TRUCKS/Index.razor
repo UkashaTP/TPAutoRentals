@@ -1,0 +1,107 @@
+﻿@page "/trucks/"
+@inject HttpClient _client
+@inject IJSRuntime js
+@inject NavigationManager NavManager
+@attribute [Authorize]
+
+<PageTitle>Trucks</PageTitle>
+
+
+@if (Models == null)
+{
+    <div class="alert alert-info">Loading Vehicles...</div>
+}
+else
+{
+    <div style="display: flex;flex-wrap: wrap;">
+        @* Load the models of trucks *@
+        @foreach (var model in Models)
+        {
+            @if (model.Transport.TransportName == "Trucks")
+            {
+                <div>
+                    <div class="card">
+                        <div style="width: 200px; height: 100px; margin-left: auto; margin-right: auto;">
+                            <img src="Images/@model.ModelImage" alt="@model.ModelImage" style="width: 200px; object-fit: cover;">
+                        </div>
+                        <div class="container" style="width: 200px;">
+                            <h2 style="font-size:20px;">@(model.Brand.BrandName + " " + model.ModelName)</h2>
+                            <p>@model.ModelTransmission</p>
+                            <div style="display: flex">
+                                <div style="width: 100px;">
+                                    <p>@model.ModelYear</p>
+                                </div>
+                                <div>
+                                    <p style="text-align: right;">@("$" + model.ModelCostHourly + "/hour")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+}
+
+
+
+<div class="form-group">
+    <label>Please enter staff Name here: </label>
+    <div>
+        <InputText @bind-Value="@staffname" class="form-control" />
+    </div>
+</div>
+
+<div class="form-group">
+    <label>Please enter staff Password here: </label>
+    <div>
+        <InputText @bind-Value="@staffpassword" class="form-control" />
+    </div>
+</div>
+
+@if (showError)
+{
+    <p style="color: red;">Wrong Username or Password. Please try again</p>
+}
+
+<button @onclick="CheckValidation" type="submit" class="btn btn-success btn-block">
+    Enter PIN
+</button>
+
+@code {
+
+    private List<Model>? Models;
+    private string? staffname;
+    private string? staffpassword;
+    private List<Staff>? Staffs;
+    private bool showError = false;
+
+
+
+    private void CheckValidation()
+    {
+        if (Staffs != null)
+        {
+            foreach (var staff in Staffs)
+            {
+                if (staffname == staff.StaffName && staffpassword == staff.StaffPassword)
+                {
+                    NavManager.NavigateTo("/createvehicle/");
+                }
+                else
+                {
+                    showError = true;
+                }
+            }
+        }
+    }
+
+
+
+
+    protected async override Task OnInitializedAsync()
+    {
+        Models = await _client.GetFromJsonAsync<List<Model>>($"{Endpoints.ModelsEndpoint}");
+        Staffs = await _client.GetFromJsonAsync<List<Staff>>($"{Endpoints.StaffsEndpoint}");
+    }
+}

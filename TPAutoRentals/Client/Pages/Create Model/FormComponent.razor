@@ -1,0 +1,459 @@
+﻿@using System.Collections
+@using System.Net.Http.Headers
+@inject HttpClient _client
+@inject HttpClient Http
+@inject IJSRuntime js
+@inject NavigationManager NavManager
+
+
+<EditForm Model="@model" OnValidSubmit="@OnValidSubmit">
+    @if (staffisvalid)
+    {
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset disabled="@Disabled">
+
+            <div class="form-group">
+                <label>Brand: </label>
+                <div>
+                    <InputSelect @bind-Value="model.BrandID" class="form-control">
+                        <option value="">-- Select Brand --</option>
+                        @if (Brands != null)
+                        {
+                            foreach (var brand in Brands)
+                            {
+                                <option value="@brand.ID">@(brand.BrandName)</option>
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => model.BrandID)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Model Name: </label>
+                <div>
+                    <InputText @bind-Value="@model.ModelName" class="form-control" />
+                    <ValidationMessage For="@(() => model.ModelName)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Model Year: </label>
+                <div>
+                    <InputText @bind-Value="@model.ModelYear" class="form-control" />
+                    <ValidationMessage For="@(() => model.ModelYear)" />
+                </div>
+            </div>
+
+
+            <div class="form-group">
+                <label>Transport: </label>
+                <div>
+                    <InputSelect @bind-Value="model.TransportID" class="form-control">
+                        <option value="">-- Select Transport --</option>
+                        @if (Transports != null)
+                        {
+                            foreach (var transport in Transports)
+                            {
+                                <option value="@transport.ID">@(transport.TransportName)</option>
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => model.TransportID)" />
+                </div>
+            </div>
+
+            @if (model.TransportID != null && Transports != null)
+            {
+                <div class="form-group">
+                    <label>Body Style: </label>
+                    <div>
+                        <InputSelect @bind-Value="model.ModelBodyStyle" class="form-control">
+                            @if (Transports[model.TransportID - 1 ?? 0].TransportName == "Cars")
+                            {
+                                foreach (var style in cars)
+                                {
+                                    <option value="@style">@style</option>
+                                }
+                            }
+                            else if (Transports[model.TransportID - 1 ?? 0].TransportName == "Trucks")
+                            {
+                                foreach (var style in trucks)
+                                {
+                                    <option value="@style">@style</option>
+                                }
+                            }
+                            else if (Transports[model.TransportID - 1 ?? 0].TransportName == "Vans")
+                            {
+                                foreach (var style in vans)
+                                {
+                                    <option value="@style">@style</option>
+                                }
+                            }
+                            else if (Transports[model.TransportID - 1 ?? 0].TransportName == "Buses")
+                            {
+                                foreach (var style in buses)
+                                {
+                                    <option value="@style">@style</option>
+                                }
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => model.ModelBodyStyle)" />
+                    </div>
+                </div>
+            }
+
+            <div class="form-group">
+                <label>Model Seaters: </label>
+                <div>
+                    <InputText @bind-Value="model.ModelSeater" class="form-control" />
+                    <ValidationMessage For="@(() => model.ModelSeater)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Model Fuel: </label>
+                <div>
+                    <InputSelect @bind-Value="model.ModelFuel" class="form-control">
+                        <option value="">-- Select Fuel --</option>
+                        <option value="Petrol">Petrol</option>
+                        <option value="Diesel">Diesel</option>
+                        <option value="Hybrid Petrol">Hybrid Petrol</option>
+                        <option value="Hybrid Diesel">Hybrid Diesel</option>
+                        <option value="Electric">Electric</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => model.ModelFuel)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Model Transmission: </label>
+                <div>
+                    <InputSelect @bind-Value="model.ModelTransmission" class="form-control">
+                        <option value="">-- Select Transmission --</option>
+                        <option value="Manual">Manual</option>
+                        <option value="Automatic">Automatic</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => model.ModelTransmission)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Model Cost Per Hour: </label>
+                <div>
+                    <InputText @bind-Value="@model.ModelCostHourly" class="form-control" />
+                    <ValidationMessage For="@(() => model.ModelCostHourly)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Model Cost Per Day: </label>
+                <div>
+                    <InputText @bind-Value="@model.ModelCostDaily" class="form-control" />
+                    <ValidationMessage For="@(() => model.ModelCostDaily)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Model Colours: </label>
+                <a @onclick="CreateModelColour" class="btn btn-outline-dark btn-block">
+                    Add New Colour
+                </a>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>HexCode</th>
+                        <th>Colour Preview</th>
+                        <th>Front View</th>
+                        <th>Side View</th>
+                        <th>Back View</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @*Create model colours*@
+                    @if (ModelColours != null)
+                    {
+                        foreach (var mc in ModelColours)
+                        {
+                            if (mc.ModelID == model.ID)
+                            {
+                                string highlight = "#FFFFFF";
+                                if (mc.MCImgSide == model.ModelImage)
+                                {   
+                                    highlight = "#AAAAAA";
+                                }
+
+                                <tr style="color: @mc.MCHexCode;background-color: @highlight;">
+                                    <td>
+                                        <div>
+                                            <InputText @bind-Value="@mc.MCName" class="form-control" />
+                                            <ValidationMessage For="@(() => mc.MCName)" />
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <InputText @bind-Value="@mc.MCHexCode" class="form-control" />
+                                            <ValidationMessage For="@(() => mc.MCHexCode)" />
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @* Previews the colour of the hex code into the name of the code *@
+                                        <p style="color: @mc.MCHexCode;font-weight: bold;text-align:center">
+                                            @mc.MCName
+                                        </p>
+                                    </td>
+                                    <td>
+                                        @*Uploading images function for model colours*@
+                                        @if (mc.MCImgFront != null)
+                                        {
+                                            <div>
+                                                <InputFile OnChange="@((e) => UploadFile(e, mc, "Front"))" />
+                                            </div>
+                                            <div>
+                                                <img src="Images/@(mc.MCImgFront)" alt="@(mc.MCImgFront)" height="50" width="auto">
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <InputFile OnChange="@((e) => UploadFile(e, mc, "Front"))" />
+                                        }
+                                    </td>
+                                    <td>
+                                        @*Uploading images function for model colours*@
+                                        @if (mc.MCImgSide != null)
+                                        {
+                                            <div>
+                                                <InputFile OnChange="@((e) => UploadFile(e, mc, "Side"))" />
+                                            </div>
+                                            <div>
+                                                <img src="Images/@(mc.MCImgSide)" alt="@(mc.MCImgSide)" height="50" width="auto">
+                                            </div>
+                                        }
+                                        else
+                                            {@*Uploading images function for model colours*@
+                                            <InputFile OnChange="@((e) => UploadFile(e, mc, "Side"))" />
+                                            <ValidationMessage For="@(() => mc.MCImgSide)" />
+                                        }
+                                    </td>
+                                    <td>
+                                        @*Uploading images function for model colours*@
+                                        @if (mc.MCImgBack != null)
+                                        {
+                                            <div>
+                                                <InputFile OnChange="@((e) => UploadFile(e, mc, "Back"))" />
+                                            </div>
+                                            <div>
+                                                <img src="Images/@(mc.MCImgBack)" alt="@(mc.MCImgBack)" height="50" width="auto">
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <InputFile OnChange="@((e) => UploadFile(e, mc, "Back"))" />
+                                        }
+                                    </td>
+                                    <td>
+                                        @* Set model colour to set as the main model image *@
+                                        <a @onclick="((e) => updateModelMCID(e, mc))" class="btn btn-primary">
+                                            Set As Main
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    }
+                </tbody>
+            </div>
+        </fieldset>
+        @if (!Disabled)
+        { 
+            <button type="submit" @onclick="UpdateModelColour" class="btn btn-success btn-block">
+                @ButtonText
+            </button>
+            @if (model.ID != 0)
+            {
+                <a class="btn btn-danger" @onclick="@(()=>Delete(model.ID))">
+                    Delete Model
+                </a>
+            }
+        }
+    }
+    else
+    {   
+        @*Staff verification for authorization to create/edit/delete models*@
+        <header>Please Log in as Staff to access this</header>
+
+        <div class="form-group">
+            <label>Enter Staff Name: </label>
+            <div>
+                <InputText @bind-Value="@staffusername" class="form-control" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Enter Staff Password: </label>
+            <div>
+                <InputText @bind-Value="@staffpassword" class="form-control" />
+            </div>
+        </div>
+
+        @if (showError)
+        {
+            <p style="color: red;">Wrong Username or Password. Please try again</p>
+        }
+        <a @onclick="CheckValidation" type="submit" class="btn btn-success btn-block">
+            Enter PIN
+        </a>
+    }
+    <BackToList Target="createmodel" />
+</EditForm>
+
+
+@code {
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public Model? model { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Save";
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+
+    private IList<Brand>? Brands;
+    private IList<Transport>? Transports;
+    private IList<ModelColour>? ModelColours;
+    private IList<ModelColour>? ModelColoursOriginal;
+
+    private int colourid;
+
+    private string[] cars = { "Coupe", "Sedan", "Hatchback", "Convertible" };
+    private string[] trucks = {"Pickup", "SUV", "Semi-truck"};
+    private string[] vans = {"Minivan", "Cargo Van"};
+    private string[] buses = {"Bus"};
+
+    private async Task updateModelMCID(EventArgs e, ModelColour mc)
+    {
+        model.ModelImage = mc.MCImgSide;
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        Staffs = await _client.GetFromJsonAsync<List<Staff>>($"{Endpoints.StaffsEndpoint}");
+        Brands = await _client.GetFromJsonAsync<List<Brand>>($"{Endpoints.BrandsEndpoint}");
+        Transports = await _client.GetFromJsonAsync<List<Transport>>($"{Endpoints.TransportsEndpoint}");
+        ModelColours = await _client.GetFromJsonAsync<List<ModelColour>>($"{Endpoints.ModelColoursEndpoint}");
+        ModelColoursOriginal = await _client.GetFromJsonAsync<List<ModelColour>>($"{Endpoints.ModelColoursEndpoint}"); ;
+    }
+
+    private void CreateModelColour()
+    {
+        ModelColour modelcolour = new ModelColour();
+        modelcolour.ModelID = model.ID;
+        ModelColours.Add(modelcolour);
+    }
+
+    private async Task UpdateModelColour() //
+    {
+        if (ModelColours != null && ModelColoursOriginal != null)
+        {
+            for(var i=0;i<ModelColours.Count;i++)
+            {
+                var mc = ModelColours[i];
+                if (mc.ModelID == model.ID)
+                {
+                    if(i<ModelColoursOriginal.Count)
+                    {
+                        await _client.PutAsJsonAsync($"{Endpoints.ModelColoursEndpoint}/{mc.ID}", mc);
+                    }
+                    else
+                    {
+                        await _client.PostAsJsonAsync(Endpoints.ModelColoursEndpoint, mc);
+                    }
+                }
+            }
+        }
+    }
+
+    //Upload image function
+    private async Task UploadFile(InputFileChangeEventArgs e,ModelColour mc, string imageType) //Uploads image
+    {
+        foreach (var imageFile in e.GetMultipleFiles(1))
+        {
+            try
+            {
+                var content = new MultipartFormDataContent();
+                var fileContent = new StreamContent(imageFile.OpenReadStream(maxFileSize));
+                content.Add(fileContent, "file", imageFile.Name);
+
+                var response = await _client.PostAsync("api/FileUpload", content);
+                if (response.IsSuccessStatusCode)
+                {
+                    if (imageFile != null)
+                    {
+                        // Update ModelColour properties based on the type of image (Front, Side, Back)
+                        switch (imageType)
+                        {
+                            case "Front":
+                                mc.MCImgFront = imageFile.Name.ToString();
+                                break;
+                            case "Side":
+                                mc.MCImgSide = imageFile.Name.ToString();
+                                break;
+                            case "Back":
+                                mc.MCImgBack = imageFile.Name.ToString();
+                                break;
+                        }
+                    }                    
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Upload failed: {ex.Message}");
+            }
+        }
+    }
+
+    private long maxFileSize = 1024 * 1024 * 15;
+
+    async Task Delete(int modelID)
+    {
+        if (model != null)
+        {
+            var confirm = await js.InvokeAsync<bool>("confirm", $"Do you want to delete {model.ModelName}?");
+
+            if (confirm)
+            {
+                var response = await _client.DeleteAsync($"{Endpoints.ModelsEndpoint}/{modelID}");
+                await OnInitializedAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    NavManager.NavigateTo("/createmodel/");
+                }
+            }
+        }
+    }
+
+    private List<Staff>? Staffs;
+
+    private string? staffusername;
+    private string? staffpassword;
+    private bool showError = false;
+    private bool staffisvalid = false;
+
+
+    private void CheckValidation() //Verify password of Staff
+    {
+
+        if (Staffs != null)
+        {
+            foreach (var staff in Staffs)
+            {
+                if (staffusername == staff.StaffName && staffpassword == staff.StaffPassword)
+                {
+                    staffisvalid = true;
+                }
+                else
+                {
+                    showError = true;
+                }
+            }
+        }
+    }
+}

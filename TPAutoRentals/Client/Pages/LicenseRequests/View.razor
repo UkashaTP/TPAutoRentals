@@ -1,0 +1,16 @@
+﻿@page "/licenserequests/view/{id:int}"
+@inject HttpClient _client
+@inject NavigationManager _navManager
+
+<h3>View LicenseRequest</h3>
+<FormComponent licenserequest="licenserequest" Disabled="true" />
+@code {
+    [Parameter] public int id { get; set; }
+    LicenseRequest? licenserequest = new LicenseRequest();
+    protected async override Task OnParametersSetAsync()
+    {
+        licenserequest = await
+        _client.GetFromJsonAsync<LicenseRequest>($"{Endpoints.LicenseRequestsEndpoint}/{id}");
+    }
+}
+

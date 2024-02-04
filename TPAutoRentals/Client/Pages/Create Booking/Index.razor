@@ -1,0 +1,109 @@
+﻿@page "/bookings/"
+@inject HttpClient _client
+@attribute [Authorize]
+
+<PageTitle>Recent Bookings</PageTitle>
+
+<a href="/bookings/create" class="btn btn-secondary">
+    <span class="oi oi-plus"></span>
+    Create New Booking
+</a>
+<br />
+<br />
+
+@* Search bar to search for bookings *@
+<div class="form-group">
+    <label>Search: </label>
+    <div>
+        <InputText @bind-Value="@keyword" class="form-control" />
+    </div>
+</div>
+@if (Bookings == null)
+{
+    <div class="alert alert-info">Loading Bookings...</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Vehicle Model</th>
+                <th>License Plate</th>
+                <th>Status</th>
+                <th>Colour</th>
+                <th>Booked By</th>
+                <th>Chauffeur Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            @foreach (var bk in Bookings)
+            {   
+                @*Filter out words for search bar*@
+                if (bk.Vehicle.ModelColour.Model.Brand.BrandName.ToLower().Contains(keyword) || bk.Vehicle.VehPlateNum.ToLower().Contains(keyword) || bk.BookStatus.ToLower().Contains(keyword) || bk.Vehicle.ModelColour.MCName.ToLower().Contains(keyword) || bk.Customer.CusName.ToLower().Contains(keyword) || bk.Staff.StaffName.ToLower().Contains(keyword))
+                
+                {
+                    <tr>
+                        <td>
+                            @if (bk.Vehicle.ModelColour.MCImgSide == null)
+                            {
+                                <img src="Images/noimg.jpeg" alt="Image Unavailable" height="50" width="auto">
+                            }
+                            else
+                            {
+                                <img src="Images/@bk.Vehicle.ModelColour.MCImgSide" alt="@bk.Vehicle.ModelColour.MCImgSide" height="50" width="auto">
+                            }
+                        </td>
+                        <td>@(bk.Vehicle.ModelColour.Model.Brand.BrandName + " " + bk.Vehicle.ModelColour.Model.ModelName)</td>
+                        <td>@bk.Vehicle.VehPlateNum</td>
+                        <td>@bk.BookStatus</td>
+                        <td>@bk.Vehicle.ModelColour.MCName</td>
+                        <td>
+                            @if (bk.Customer.CusProfileImage == null)
+                            {
+                                <img src="Images/nopfp.png" alt="Image Unavailable" height="50" width="auto">
+                            }
+                            else
+                            {
+                                <img src="Images/@bk.Customer.CusProfileImage" alt="@bk.Customer.CusProfileImage" height="50" width="auto">
+                            }
+                            <p>@bk.Customer.CusName</p>
+                        </td>
+                        <td>
+                            @if (bk.Staff != null)
+                            {
+                                @if (bk.Staff.StaffRole == "Chauffeur")
+                                {
+                                    <p>@bk.Staff.StaffName</p>
+                                }
+                            }
+                            else
+                            {
+                                <p>No Chauffeur</p>
+                            }
+                    </td>
+                    <td>
+                        <a href="/bookings/view/@bk.ID" class="btn btn-primary">
+                            <span class="oi oi-book"></span>
+                        </a>
+                    </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+
+    private List<Booking>? Bookings;
+    private string keyword = "";
+
+    protected async override Task OnInitializedAsync()
+    {
+        Bookings = await _client.GetFromJsonAsync<List<Booking>>($"{Endpoints.BookingsEndpoint}");
+    }
+}

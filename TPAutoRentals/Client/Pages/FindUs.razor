@@ -1,0 +1,53 @@
+﻿@page "/findus"
+@inject HttpClient _client
+
+<PageTitle>Contact</PageTitle>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/contactstyle.css" rel="stylesheet" />
+</head>
+<body>
+
+    <div class="about-section">
+        <h1>Find Us Page</h1>
+
+    </div>
+
+    <h2 style="text-align:center">Our Outlets</h2>
+    <div class="row">
+
+        @if (Outlets != null)
+        {
+            foreach (var outlet in Outlets)
+            {
+                <div class="column">
+                    <div class="card">
+                        <iframe width="auto"
+                                height="450"
+                                style="border:0"
+                                loading="lazy"
+                                allowfullscreen
+                                referrerpolicy="no-referrer-when-downgrade"
+                                src="@("https://www.google.com/maps/embed/v1/place?key=AIzaSyCdussE7ABNHAXwYEWqm7HQEU_FGoJfCXg&q="+outlet.OutletAddress)">
+                        </iframe>
+                        <div class="container">
+                            <h2>@outlet.OutletAddress</h2>
+                            <p>Managed By: @outlet.Staff.StaffName</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+</body>
+
+@code {
+    private List<Outlet>? Outlets;
+
+    protected async override Task OnInitializedAsync()
+    {
+        Outlets = await _client.GetFromJsonAsync<List<Outlet>>($"{Endpoints.OutletsEndpoint}");
+    }
+}

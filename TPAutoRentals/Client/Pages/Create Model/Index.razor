@@ -1,0 +1,110 @@
+﻿@page "/createmodel/"
+@inject HttpClient _client
+@inject IJSRuntime js
+@attribute [Authorize]
+
+<h3 class="card-title">Vehicle Models</h3>
+<a href="/createmodel/create" class="btn btn-secondary">
+    <span class="oi oi-plus"></span>
+    Create New Vehicle Model
+</a>
+<br />
+<br />
+<div class="form-group">
+    @* Search bar to search for models *@
+    <label>Search: </label>
+    <div>
+        <InputText @bind-Value="@keyword" class="form-control" />
+    </div>
+</div>
+@if ((Models == null))
+{
+    <div class="alert alert-info">Loading Models...</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Model</th>
+                <th>Transport</th>
+                <th>Color Variations</th>
+                <th>Units</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var model in Models)
+            {
+                if (model.Brand.BrandName.ToLower().Contains(keyword) || model.ModelName.ToLower().Contains(keyword) || model.Transport.TransportName.ToLower().Contains(keyword))
+                {
+                    <tr>
+                        <td><img src="Images/@model.ModelImage" alt="@model.ModelImage" height="50" width="auto"></td>
+                        <td>@(model.Brand.BrandName + " " + model.ModelName)</td>
+                        <td>@model.Transport.TransportName</td>
+                        <td>@CountColours(model)</td>
+                        <td>@CountVehicles(model)</td>
+                        <td>
+                            <a href="/createmodel/view/@model.ID" class="btn btn-primary">
+                                <span class="oi oi-book"></span>
+                            </a>
+                            <a href="/createmodel/edit/@model.ID" class="btn btn-warning">
+                                <span class="oi oi-pencil"></span>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+    private List<Model>? Models;
+    private List<ModelColour>? ModelColours;
+    private List<Vehicle>? Vehicles;
+    private int countvehicles;
+    private string keyword = "";
+
+    protected async override Task OnInitializedAsync()
+    {
+        Models = await _client.GetFromJsonAsync<List<Model>>($"{Endpoints.ModelsEndpoint}");
+        ModelColours = await _client.GetFromJsonAsync<List<ModelColour>>($"{Endpoints.ModelColoursEndpoint}");
+        Vehicles = await _client.GetFromJsonAsync<List<Vehicle>>($"{Endpoints.VehiclesEndpoint}");
+    }
+
+    private int CountColours(Model model)
+    {
+        int countcolour = 0;
+        if(ModelColours != null)
+        {
+            foreach (var modelcolours in ModelColours)
+            {
+                if(modelcolours.ModelID == model.ID)
+                {
+                    countcolour++;
+                }
+            }
+        }
+        return countcolour;
+    }
+
+    private int CountVehicles(Model model)
+    {
+        int countvehicles = 0;
+        if (Vehicles != null)
+        {
+            foreach (var vehicle in Vehicles)
+            {
+                if (vehicle.ModelColour.ModelID == model.ID)
+                {
+                    countvehicles++;
+                }
+            }
+        }
+        return countvehicles;
+    } 
+}
+

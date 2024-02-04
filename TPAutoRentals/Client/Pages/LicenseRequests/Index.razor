@@ -1,0 +1,123 @@
+﻿@page "/licenserequests/"
+@inject HttpClient _client
+@inject IJSRuntime js
+@attribute [Authorize]
+
+<h3 class="card-title">License Requests</h3>
+<a href="/licenserequests/create" class="btn btn-secondary">
+    <span class="oi oi-plus"></span>
+    Create New LicenseRequest
+</a>
+<br />
+<br />
+<div class="form-group">
+    @* Search bar to search for license requests *@
+    <label>Search: </label>
+    <div>
+        <InputText @bind-Value="@keyword" class="form-control" />
+    </div>
+</div>
+@if (LicenseRequests == null)
+{
+    <div class="alert alert-info">Loading License Requests...</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Requested By</th>
+                <th>Status</th>
+                <th>License Class</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var lreq in LicenseRequests)
+            {
+                if (lreq.Customer.CusName.ToLower().Contains(keyword) || lreq.LReqStatus.ToLower().Contains(keyword) || lreq.Customer.CusLicenseClass.ToLower().Contains(keyword))
+                {
+                    <tr>
+                        <td>
+                            @if (lreq.LReqImage == null)
+                            {
+                                <img src="Images/noimg.jpeg" alt="Image Unavailable" height="50" width="auto">
+                            }
+                            else
+                            {
+                                <img src="Images/@lreq.LReqImage" alt="@lreq.LReqImage" height="50" width="auto">
+                            }
+                        </td>
+                        <td>@lreq.Customer.CusName</td>
+                        <td>@lreq.LReqStatus</td>
+                        <td>@lreq.Customer.CusLicenseClass</td>
+                        <td>
+                            @if (lreq.LReqStatus == "PENDING")
+                            {
+                                <button class="btn btn-danger" style="background-color:darkolivegreen" @onclick="((e) => Approve(e, lreq))">
+                                    APPROVE
+                                </button>
+                                <button class="btn btn-danger" @onclick="((e) => Cancel(e, lreq))">
+                                    DECLINE
+                                </button>
+                            }
+                            else if (lreq.LReqStatus == "APPROVED, PENDING CLASS")
+                            {
+                                <a href="/licenserequests/assignclass/@lreq.CusID" style="background-color:teal" class="btn btn-primary">
+                                    ASSIGN DRIVER'S CLASS
+                                </a>
+                            }
+                            else if (lreq.LReqStatus == "APPROVED")
+                            {
+                                <a href="/licenserequests/assignclass/@lreq.CusID" style="background-color:deepskyblue" class="btn btn-primary">
+                                    UPDATE DRIVER'S CLASS
+                            </a>
+                        }
+                    </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+    private List<LicenseRequest>? LicenseRequests;
+    private string defaultimg = "noimg.jpeg";
+    private string keyword = "";
+
+    protected async override Task OnInitializedAsync()
+    {
+        LicenseRequests = await _client.GetFromJsonAsync<List<LicenseRequest>>($"{Endpoints.LicenseRequestsEndpoint}");
+    }
+
+    private async Task Approve(EventArgs e, LicenseRequest lreq)
+    {
+        lreq.LReqStatus = "APPROVED, PENDING CLASS";
+        await _client.PutAsJsonAsync($"{Endpoints.LicenseRequestsEndpoint}/{lreq.ID}", lreq);
+    }
+
+    private async Task Cancel(EventArgs e, LicenseRequest lreq)
+    {
+        lreq.LReqStatus = "DECLINED";
+        await _client.PutAsJsonAsync($"{Endpoints.LicenseRequestsEndpoint}/{lreq.ID}", lreq);
+    }
+
+    async Task Delete(int lreqID)
+    {
+        if (LicenseRequests != null)
+        {
+            var lreq = LicenseRequests.First(q => q.ID == lreqID);
+
+            var confirm = await js.InvokeAsync<bool>("confirm", $"Do you want to delete {lreq.ID}?");
+
+            if (confirm)
+            {
+                await _client.DeleteAsync($"{Endpoints.LicenseRequestsEndpoint}/{lreqID}");
+                await OnInitializedAsync();
+            }
+        }
+    }
+}

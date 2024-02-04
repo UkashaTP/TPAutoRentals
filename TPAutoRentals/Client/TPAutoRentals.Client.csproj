@@ -8,10 +8,35 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Pages\BUSES\NewFolder\**" />
+    <Content Remove="Pages\BUSES\NewFolder\**" />
+    <EmbeddedResource Remove="Pages\BUSES\NewFolder\**" />
+    <None Remove="Pages\BUSES\NewFolder\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Pages\BUSES\Cars.razor" />
+    <Content Remove="Pages\VANS\Index1.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Pages\BUSES\NewFile.txt" />
+    <None Remove="Pages\Create Booking\NewFile.txt" />
+    <None Remove="Pages\Create Brand\NewFile.txt" />
+    <None Remove="Pages\Create Customer\NewFile.txt" />
+    <None Remove="Pages\Create Model\NewFile.txt" />
+    <None Remove="Pages\Create Staff\NewFile.txt" />
+    <None Remove="Pages\LicenseRequests\NewFile.txt" />
+    <None Remove="Pages\VANS\NewFile.txt" />
+    <None Remove="Services\NewFile.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.14" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.14" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="7.0.14" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
+    <PackageReference Include="Toolbelt.Blazor.HttpClientInterceptor" Version="10.2.0" />
   </ItemGroup>
 
   <ItemGroup>

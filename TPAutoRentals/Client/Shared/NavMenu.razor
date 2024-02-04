@@ -11,6 +11,7 @@
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="flex-column">
+        @*
         <AuthorizeView>
             <Authorized>
                 <div class="nav-item px-3">
@@ -36,7 +37,7 @@
                     </NavLink>
                 </div>
             </NotAuthorized>
-        </AuthorizeView>
+        </AuthorizeView>*@
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="home" Match="NavLinkMatch.All">
@@ -49,7 +50,7 @@
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="fetchdata">
+            <NavLink class="nav-link" href="vans">
                 <span class="oi oi-list-rich" aria-hidden="true"></span> VANS
             </NavLink>
         </div>
@@ -64,13 +65,43 @@
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="find us">
+            <NavLink class="nav-link" href="findus">
                 <span class="oi oi-list-rich" aria-hidden="true"></span> FIND US
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="contact">
+            <NavLink class="nav-link" href="aboutus">
                 <span class="oi oi-list-rich" aria-hidden="true"></span> CONTACT
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="createcustomer">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> CREATE CUSTOMER
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="staffs">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> CREATE STAFF
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="createmodel">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> CREATE MODEL
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="createbrand">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> CREATE BRAND
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="bookings">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> CREATE BOOKING
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="licenserequests">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> LICENSE REQUESTS
             </NavLink>
         </div>
     </nav>

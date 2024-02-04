@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34309.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPAutoRentals.Server", "TPAutoRentals\Server\TPAutoRentals.Server.csproj", "{10525A43-6A11-4ADE-A331-C03E71BDD25B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TPAutoRentals.Server", "TPAutoRentals\Server\TPAutoRentals.Server.csproj", "{10525A43-6A11-4ADE-A331-C03E71BDD25B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPAutoRentals.Client", "TPAutoRentals\Client\TPAutoRentals.Client.csproj", "{9B2D2C37-A379-43A1-83A2-453C8F09E493}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TPAutoRentals.Client", "TPAutoRentals\Client\TPAutoRentals.Client.csproj", "{9B2D2C37-A379-43A1-83A2-453C8F09E493}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPAutoRentals.Shared", "TPAutoRentals\Shared\TPAutoRentals.Shared.csproj", "{F8F3DE8D-C027-40A6-BFC7-5ECC997F88F4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TPAutoRentals.Shared", "TPAutoRentals\Shared\TPAutoRentals.Shared.csproj", "{F8F3DE8D-C027-40A6-BFC7-5ECC997F88F4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

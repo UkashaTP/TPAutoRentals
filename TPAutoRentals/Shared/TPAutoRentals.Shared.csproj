@@ -7,10 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <SupportedPlatform Include="browser" />
+    <None Remove="NewFile1.txt" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Domain\" />
+    <SupportedPlatform Include="browser" />
   </ItemGroup>
 </Project>

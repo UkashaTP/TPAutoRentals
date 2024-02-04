@@ -1,0 +1,161 @@
+﻿@inject HttpClient _client
+@inject IJSRuntime js
+@inject NavigationManager NavManager
+
+<EditForm Model="@customer" OnValidSubmit="@OnValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    @if (customer != null)
+    {
+
+        @*For customer can create an account*@
+        @if (customer.ID == 0 || cusisvalid)
+        {
+            <fieldset disabled="@Disabled">
+
+                <div class="form-group">
+                    <label>Customer Name: </label>
+                    <div>
+                        <InputText @bind-Value="@customer.CusName" class="form-control" />
+                        <ValidationMessage For="@(() => customer.CusName)" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Customer User Name: </label>
+                    <div>
+                        <InputText @bind-Value="@customer.CusUsername" class="form-control" />
+                        <ValidationMessage For="@(() => customer.CusUsername)" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Customer Password: </label>
+                    <div>
+                        <InputText @bind-Value="@customer.CusPassword" class="form-control" />
+                        <ValidationMessage For="@(() => customer.CusPassword)" />
+                    </div>
+                </div>
+                @* User can upload an image here *@
+                <div class="form-group">
+                    <label>Customer Profile Picture: </label>
+                    <div>
+                        <InputFile OnChange="@UploadFile" />
+                        <img src="Images/@customer.CusProfileImage" alt="@customer.CusName" width="200" />
+                    </div>
+                </div>
+            </fieldset>
+
+            @if (!Disabled)
+            {
+                <button type="submit" class="btn btn-success btn-block">
+                    @ButtonText
+                </button>
+                @if (customer.ID != 0)
+                {
+                    <a class="btn btn-danger" @onclick="@(()=>Delete(customer.ID))">
+                        Delete Customer
+                    </a>
+                }
+
+            }
+
+        }
+        else
+        {
+            @* Requires customer to enter their password to edit their information *@
+            <header>Please type in the password of @customer.CusName
+                to access this</header>
+
+            <div class="form-group">
+                <label>Enter Password: </label>
+                <div>
+                    <InputText @bind-Value="@cuspassword" class="form-control" />
+                </div>
+            </div>
+
+            @if (showError)
+            {
+                <p style="color: red;">Wrong Password. Please try again</p>
+            }
+            <a @onclick="CheckValidation" type="submit" class="btn btn-success btn-block">
+                Enter PIN
+            </a>
+        }
+    }
+    <BackToList Target="createcustomer" />
+</EditForm>
+
+@code {
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public Customer? customer { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Save";
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+
+
+    private async Task UploadFile(InputFileChangeEventArgs e)
+    {
+        foreach (var imageFile in e.GetMultipleFiles(1))
+        {
+            try
+            {
+                var content = new MultipartFormDataContent();
+                var fileContent = new StreamContent(imageFile.OpenReadStream(maxFileSize));
+                content.Add(fileContent, "file", imageFile.Name);
+
+                var response = await _client.PostAsync("api/FileUpload", content);
+                if (response.IsSuccessStatusCode)
+                {
+                    customer.CusProfileImage = imageFile.Name;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Upload failed: {ex.Message}");
+            }
+        }
+    }
+
+    async Task Delete(int customerID)
+    {
+        if (customer != null)
+        {
+            var confirm = await js.InvokeAsync<bool>("confirm", $"Do you want to delete {customer.CusName}?");
+
+            if (confirm)
+            {
+                var response = await _client.DeleteAsync($"{Endpoints.CustomersEndpoint}/{customerID}");
+                await OnInitializedAsync();
+                if(response.IsSuccessStatusCode)
+                {
+                    NavManager.NavigateTo("/createcustomer/");
+                }
+            }
+        }
+    }
+
+    private long maxFileSize = 1024 * 1024 * 15;
+
+    private string? cuspassword;
+    private bool showError = false;
+    private bool cusisvalid = false;
+
+    [Parameter]
+    public EventCallback<bool> OnCusIsValidChanged { get; set; }
+
+    private async Task CheckValidation()
+    {
+        if (cuspassword == customer?.CusPassword)
+        {
+            cusisvalid = true;
+            showError = false;
+            await OnCusIsValidChanged.InvokeAsync(cusisvalid); // send to View.razor
+        }
+        else
+        {
+            showError = true;
+            cusisvalid = false;
+            await OnCusIsValidChanged.InvokeAsync(cusisvalid);
+        }
+    }
+}

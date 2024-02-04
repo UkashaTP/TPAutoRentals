@@ -1,0 +1,169 @@
+﻿@page "/createcustomer/view/{id:int}"
+@inject HttpClient _client
+@inject NavigationManager _navManager
+
+
+<h3>View Customer</h3>
+<FormComponent customer="customer" Disabled="true" OnCusIsValidChanged="HandleCusIsValidChanged" />
+<br />
+<br />
+@if(approve)
+{   
+    @*Shows booking of chosen customers after customer has entered his/her account*@
+    <h3>Your Recent Bookings</h3>
+    <a href="/bookings/create" class="btn btn-secondary">
+        <span class="oi oi-plus"></span>
+        Create New Booking
+    </a>
+    <br />
+    <br />
+    @if (Bookings == null)
+    {
+        <div class="alert alert-info">Loading Bookings...</div>
+    }
+    else
+    {
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Vehicle Model</th>
+                    <th>Colour</th>
+                    <th>License Plate</th>
+                    <th>Booking Type</th>
+                    <th>Cost</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                    <th>Chauffeur Name</th>
+                    <th>Booked On</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var bk in Bookings)
+                {
+                    if (bk.CusID == customer.ID)
+                    {
+                        <tr>
+                            <td>
+                                @if (bk.Vehicle.ModelColour.MCImgSide == null)
+                                {
+                                    <img src="Images/noimg.jpeg" alt="Image Unavailable" height="50" width="auto">
+                                }
+                                else
+                                {
+                                    <img src="Images/@bk.Vehicle.ModelColour.MCImgSide" alt="@bk.Vehicle.ModelColour.MCImgSide" height="50" width="auto">
+                                }
+                            </td>
+                            <td>@(bk.Vehicle.ModelColour.Model.Brand.BrandName + " " + bk.Vehicle.ModelColour.Model.ModelName)</td>
+                            <td>@bk.Vehicle.ModelColour.MCName</td>
+                            <td>@bk.Vehicle.VehPlateNum</td>
+                            <td>@bk.BookType</td>
+                            <td>@bk.BookCost</td>
+                            <td>@(bk.BookDTOut.ToString() + " to " + bk.BookDTIn.ToString())</td>
+                            <td>@bk.BookStatus</td>
+                            <td>
+                                @if (bk.Staff != null)
+                                {
+                                    @if (bk.Staff.StaffRole == "Chauffeur")
+                                    {
+                                        <p>@bk.Staff.StaffName</p>
+                                    }
+                                }
+                                else
+                                {
+                                    <p>No Chauffeur</p>
+                                }
+                            </td>
+                            <td>
+                                @bk.DateUpdated;
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    <br />
+    <br />
+
+    @*Shows license request of chosen customer *@
+    <h3>Your License Requests</h3>
+    <a href="/licenserequests/create" class="btn btn-secondary">
+        <span class="oi oi-plus"></span>
+        Create New LicenseRequest
+    </a>
+    <br />
+    <br />
+    @if (LicenseRequests == null)
+    {
+        <div class="alert alert-info">Loading License Requests...</div>
+    }
+    else
+    {
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Status</th>
+                    <th>License Class</th>
+                    <th>Updated By</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var lreq in LicenseRequests)
+                {
+                    if (lreq.CusID == customer.ID)
+                    {
+                        <tr>
+                            <td>
+                                @if (lreq.LReqImage == null)
+                                {
+                                    <img src="Images/noimg.jpeg" alt="Image Unavailable" height="50" width="auto">
+                                }
+                                else
+                                {
+                                    <img src="Images/@lreq.LReqImage" alt="@lreq.LReqImage" height="50" width="auto">
+                                }
+                            </td>
+                            <td>@lreq.LReqStatus</td>
+                            <td>@lreq.Customer.CusLicenseClass</td>
+                            <td>
+                                @if (lreq.Staff != null)
+                                {
+                                    <p>@lreq.Staff.StaffName</p>
+                                }
+                                else
+                                {
+                                    <p>No Staff</p>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    [Parameter] public int id { get; set; }
+
+    private bool approve = false;
+
+    Customer? customer = new Customer();
+    private List<Booking>? Bookings;
+    private List<LicenseRequest>? LicenseRequests;
+
+    private void HandleCusIsValidChanged(bool isValid)
+    {
+        approve = isValid;
+        StateHasChanged();
+    }
+
+    protected async override Task OnParametersSetAsync()
+    {
+        Bookings = await _client.GetFromJsonAsync<List<Booking>>($"{Endpoints.BookingsEndpoint}");
+        LicenseRequests = await _client.GetFromJsonAsync<List<LicenseRequest>>($"{Endpoints.LicenseRequestsEndpoint}");
+        customer = await _client.GetFromJsonAsync<Customer>($"{Endpoints.CustomersEndpoint}/{id}");
+    }
+}

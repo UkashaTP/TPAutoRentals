@@ -1,0 +1,11 @@
+﻿@page "/home"
+
+<PageTitle>Home</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <h1>Hello, @context.User.Identity?.Name</h1>
+
+        Welcome to TPAutoRentals.
+    </Authorized>
+</AuthorizeView>

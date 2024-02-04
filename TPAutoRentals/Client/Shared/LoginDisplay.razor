@@ -2,6 +2,34 @@
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @inject NavigationManager Navigation
 
+@*
+<div class="div1">
+    <form role="search" method="get" action="http://chusmix.com/">
+    <div>
+            <input class="topnav" type="text" value="" name="s" id="s" placeholder="Search">
+            <input type="submit" id="searchsubmit" value="Ir a Ciudad" />
+    </div>
+    </form>
+</div>
+
+<div id="search-10" class="widget_search">
+    <form role="search" method="get" action="http://chusmix.com/">
+        <div style="text-align: right;">
+            <input class="ubicacion" type="text" value="" name="s" id="s">
+            <input type="submit" id="searchsubmit" value="Ir a Ciudad" />
+        </div>
+    </form>
+</div>
+
+<div class="topnav">
+    <a class="active" href="#home">Home</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+    <input type="text" placeholder="Search..">
+</div>
+*@
+
+
 <AuthorizeView>
     <Authorized>
         <a href="authentication/profile">Hello, @context.User.Identity?.Name!</a>

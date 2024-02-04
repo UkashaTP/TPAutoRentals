@@ -1,0 +1,91 @@
+﻿@page "/createvehicle/create/"
+@inject HttpClient _client
+@inject NavigationManager _navManager
+
+<h3 class="card-title">Create New Vehicle</h3>
+<hr />
+<br />
+
+<FormComponent ButtonText="Create Vehicle" vehicle="vehicle" OnValidSubmit="@CreateVehicle" />
+
+@code {
+    Vehicle vehicle = new Vehicle();
+
+    private async Task CreateVehicle()
+    {
+        await _client.PostAsJsonAsync(Endpoints.VehiclesEndpoint, vehicle);
+        _navManager.NavigateTo("/createvehicle/");
+    }
+}
+
+@*
+<EditForm Model="@vehicle" OnValidSubmit="@CreateVehicle">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">    
+        <label>Model Colour: </label>
+        <div>
+            <InputSelect @bind-Value="vehicle.MCID" class="form-control">
+                <option value="">-- Select Model Colour --</option>
+                @if (ModelColours != null)
+                {
+                    foreach (var modelcolour in ModelColours)
+                    {
+                        <option value="@modelcolour.ID">@(modelcolour.MCName+" - "+modelcolour.Model.Brand.BrandName+" "+modelcolour.Model.ModelName)</option>
+                    }
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => vehicle.MCID)" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Outlet: </label>
+        <div>
+            <InputSelect @bind-Value="vehicle.OutletID" class="form-control">
+                <option value="">-- Select Outlet --</option>
+                @if (Outlets != null)
+                {
+                    foreach (var outlet in Outlets)
+                    {
+                        <option value="@outlet.ID">@(outlet.OutletAddress)</option>
+                    }
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => vehicle.OutletID)" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Vehicle Availability: </label>
+        <div>
+            <InputSelect @bind-Value="vehicle.VehAvailability" class="form-control">
+                <option value="">-- Set Availability --</option>
+                
+                 foreach (var outlet in Outlets)
+                 {
+                    <option value="True">True</option>
+                    <option value="False">False</option>
+                 }
+                
+            </InputSelect>
+            <ValidationMessage For="@(() => vehicle.VehAvailability)" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>License Plate: </label>
+        <div>
+            <InputText @bind-Value="@vehicle.VehPlateNum" class="form-control" />
+            <ValidationMessage For="@(() => vehicle.VehPlateNum)" />
+        </div>
+    </div>
+
+
+    <button type="submit" class="btn btn-success btn-block">
+        Create Vehicle
+    </button>
+</EditForm>
+*@
+

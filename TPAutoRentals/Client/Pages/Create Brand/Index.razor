@@ -1,0 +1,73 @@
+﻿@page "/createbrand/"
+@inject HttpClient _client
+@inject IJSRuntime js
+@attribute [Authorize]
+
+<h3 class="card-title">Car Brands</h3>
+<a href="/createbrand/create" class="btn btn-secondary">
+    <span class="oi oi-plus"></span>
+    Create New Brand
+</a>
+<br />
+<br />
+<div class="form-group">
+    @* Search bar to search for brands *@
+    <label>Search: </label>
+    <div>
+        <InputText @bind-Value="@keyword" class="form-control" />
+    </div>
+</div>
+@if (Brands == null)
+{
+    <div class="alert alert-info">Loading Brands</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>Icon</th>
+                <th>Name</th>
+                <th>Country</th>
+                <th>Contact Number</th>
+                <th>Web Link</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var brand in Brands)
+            {
+                if (brand.BrandName.ToLower().Contains(keyword) || brand.BrandCountry.ToLower().Contains(keyword) || brand.BrandContactNumber.ToLower().Contains(keyword) || brand.BrandWebLink.ToLower().Contains(keyword))
+                {
+                    <tr>
+                        <td><img src="Images/@brand.BrandIcon" alt="@brand.BrandName" height="50" width="auto"></td>
+                    <td>@brand.BrandName</td>
+                    <td>@brand.BrandCountry</td>
+                    <td>@brand.BrandContactNumber</td>
+                    <td><a href="@brand.BrandWebLink">@brand.BrandWebLink</a></td>
+                    <td>
+                        <a href="/createbrand/view/@brand.ID" class="btn btn-primary">
+                            <span class="oi oi-book"></span>
+                        </a>
+                        <a href="/createbrand/edit/@brand.ID" class="btn btn-warning">
+                            <span class="oi oi-pencil"></span>
+                        </a>
+                    </td>
+                    </tr>   
+                }
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+    private List<Brand>? Brands;
+    private string keyword = "";
+
+    protected async override Task OnInitializedAsync()
+    {
+        Brands = await _client.GetFromJsonAsync<List<Brand>>($"{Endpoints.BrandsEndpoint}");
+    }
+}
+

@@ -1,0 +1,702 @@
+﻿@inject HttpClient _client
+
+<EditForm Model="@booking" OnValidSubmit="@OnValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+
+    <fieldset disabled="@Disabled">
+        <div class="form-group">
+            <label>Select Customer: </label>
+            <div>
+                <InputSelect @bind-Value="booking.CusID" class="form-control">
+                    <option value="">-- Select Customer --</option>
+                    @if (Customers != null)
+                    {
+                        foreach (var customer in Customers)
+                        {
+                            if(customer.CusLicenseClass != "NO LICENSE")
+                            {
+                                <option value="@customer.ID">@(customer.CusName)</option>
+                            }
+                        }
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => booking.CusID)" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Select Your nearest outlet: </label>
+            <div>
+                <InputSelect @bind-Value="chosenOutletID" class="form-control">
+                    <option value="">-- Choose Nearest Outlet --</option>
+                    @if (Outlets != null)
+                    {
+                        foreach (var outlet in Outlets)
+                        {
+                            <option value="@outlet.ID">@(outlet.OutletAddress)</option>
+                        }
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => chosenOutletID)" />
+            </div>
+        </div>
+
+        @if(chosenOutletID != null)
+        {
+            <div class="form-group">
+                <label>Available Vehicles: </label>
+                <div>
+                    <InputSelect @bind-Value="chosenModelID" class="form-control">
+                        <option value="">-- Select Vehicle --</option>
+                        @if (Vehicles != null && Models != null)
+                        {
+                            var vehmodelIDs = new List<int>();
+                            var bookvehmodelIDs = new List<int>();
+                            foreach (var model in Models)
+                            {
+                                foreach (var vehicle in Vehicles)
+                                {
+                                    if (chosenOutletID == vehicle.OutletID)
+                                    {
+                                        if (!vehmodelIDs.Contains(model.ID) && model.ID == vehicle.ModelColour.ModelID && vehicle.VehAvailability.Equals("True"))
+                                        {
+                                            vehmodelIDs.Add(model.ID);
+                                            <option value="@model.ID">@(model.Brand.BrandName+" "+model.ModelName)</option>
+                                        }
+                                    }
+                                }
+                                for(var i = 0;i<returnoutletIDs.Count();i++)
+                                {
+                                    if (chosenOutletID == returnoutletIDs[i])
+                                    {
+                                        if ((!bookvehmodelIDs.Contains(model.ID) && !vehmodelIDs.Contains(modelIDs[i])) && model.ID == modelIDs[i])
+                                        {
+                                            bookvehmodelIDs.Add(model.ID);
+                                            <option value="@modelIDs[i]">@(model.Brand.BrandName + " "+model.ModelName)</option>
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => chosenModelID)" />
+                </div>
+            </div>
+        }
+
+        @if (chosenModelID != null)
+        {
+            <div class="form-group">
+                <label>Available Colours: </label>
+                <div>
+                    <InputSelect @bind-Value="chosenMCID" class="form-control">
+                        <option value="">-- Select Colours --</option>
+                        @if (Vehicles != null)
+                        {
+                            var vehmcIDs = new List<int>();
+                            var bookvehmcIDs = new List<int>();
+                            foreach (var vehicle in Vehicles)
+                            {
+                                if (chosenOutletID == vehicle.OutletID && vehicle.ModelColour != null && vehicle.VehAvailability != null)
+                                {
+                                    if (!vehmcIDs.Contains(vehicle.MCID??0) && chosenModelID == vehicle.ModelColour.ModelID && vehicle.VehAvailability.Equals("True"))
+                                    {
+                                        vehmcIDs.Add(vehicle.MCID??0);
+                                        <option value="@vehicle.MCID">@(vehicle.ModelColour.MCName)</option>
+                                    }
+                                }
+                            }
+                            for (var i = 0; i < returnoutletIDs.Count(); i++)
+                            {
+                                if (chosenOutletID == returnoutletIDs[i])
+                                {
+                                    if ((!bookvehmcIDs.Contains(mcIDs[i]) && !vehmcIDs.Contains(mcIDs[i])) && chosenModelID == modelIDs[i])
+                                    {
+                                        bookvehmcIDs.Add(mcIDs[i]);
+                                        <option value="@mcIDs[i]">@(mcNames[i])</option>
+                                    }
+                                }
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => chosenMCID)" />
+                </div>
+            </div>
+        }
+
+        @if (chosenMCID != null)
+        {
+            <div class="form-group">
+                <label>Available License Plate: </label>
+                <div>
+                    <InputSelect @bind-Value="booking.VehID" class="form-control">
+                        <option value="">-- Select Plate Number --</option>
+                        @if (Vehicles != null)
+                        {
+                            var vehIDs = new List<int>();
+                            var bookvehIDs = new List<int>();
+                            foreach (var vehicle in Vehicles)
+                            {
+                                if (chosenOutletID == vehicle.OutletID)
+                                {
+                                    if (!vehIDs.Contains(vehicle.ID) && chosenMCID == vehicle.MCID && (vehicle.VehAvailability ?? "False").Equals("True"))
+                                    {
+                                        vehIDs.Add(vehicle.ID);
+                                        <option value="@vehicle.ID">@(vehicle.VehPlateNum)</option>
+                                    }
+                                }
+                            }
+                            for (var i = 0; i < returnoutletIDs.Count(); i++)
+                            {
+                                if (chosenOutletID == returnoutletIDs[i])
+                                {
+                                    if ((!bookvehIDs.Contains(vehicleIDs[i]) && !vehIDs.Contains(vehicleIDs[i])) && chosenMCID == mcIDs[i])
+                                    {
+                                        bookvehIDs.Add(vehicleIDs[i]);
+                                        <option value="@vehicleIDs[i]">@(vehicleplatenums[i])</option>
+                                    }
+                                }
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => booking.VehID)" />
+                </div>
+            </div>
+        }
+
+        @if (booking.VehID != null)
+        {
+            <div class="form-group">
+                <label>Booking Type: </label>
+                <div>
+                    <InputSelect @bind-Value="booking.BookType" class="form-control">
+                        <option value="">-- Select Booking Type --</option>
+                        <option value="Per Day">Per Day</option>
+                        <option value="Per Hour">Per Hour</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => booking.BookType)" />
+                </div>
+            </div>
+
+            if(booking.BookType == "Per Day")
+            {
+                foreach(var model in Models)
+                {
+                    if(model.ID == chosenModelID)
+                    {
+                        cost = double.Parse(model.ModelCostDaily);
+                        break;
+                    }
+                }
+            }
+            else if (booking.BookType == "Per Hour")
+            {
+                foreach (var model in Models)
+                {
+                    if (model.ID == chosenModelID)
+                    {
+                        cost = double.Parse(model.ModelCostHourly);
+                        booking.BookDTIn = booking.BookDTOut.Value.Date;
+                        if(stringendtime != null)
+                        {
+                            booking.BookDTIn = booking.BookDTIn.Value.Date + TimeSpan.Parse(stringendtime);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (cost != null)
+            {
+                <div>
+                    <p>Cost: $@cost</p>
+                </div>
+            }
+
+            <div class="form-group">
+                <label>Booking Payment: </label>
+                <div>
+                    <InputSelect @bind-Value="booking.BookPayment" class="form-control">
+                        <option value="">-- Select Payment --</option>
+                        <option value="PayNow">PayNow</option>
+                        <option value="Credit Card">Credit Card</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => booking.BookPayment)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Select outlet to return vehicle: </label>
+                <div>
+                    <InputSelect @bind-Value="booking.OutletExReturn" class="form-control">
+                        <option value="">-- Select Return Outlet --</option>
+                        @if (Outlets != null)
+                        {
+                            foreach (var outlet in Outlets)
+                            {
+                                <option value="@outlet.ID">@(outlet.OutletAddress)</option>
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => booking.OutletExReturn)" />
+                </div>
+            </div>
+        }
+
+        @if ((booking.BookType == "Per Day" || booking.BookType == "Per Hour") && booking.OutletExReturn != null)
+        {
+            @* The date time set up will appear different depending on which booking type is chosen *@
+            <div class="form-group">
+                @if(booking.BookType == "Per Day")
+                {
+                    <label>Start Date: </label>
+                }
+                else if (booking.BookType == "Per Hour")
+                {
+                    <label>Date: </label>
+                }
+                <div>
+                    <InputDate @oninput="checkAvailable" @bind-Value="@booking.BookDTOut" class="form-control" />
+                    <ValidationMessage For="@(() => booking.BookDTOut)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+
+                <label>Start Time: </label>
+                <div>
+                    <InputSelect @bind-Value="@stringstarttime" class="form-control">
+                        @* Algorithm to show the available times of a chosen start date *@
+                        @if(booking.BookDTIn != null && booking.BookDTOut != null && !Disabled)
+                        {
+                            <option value="0:00">Select Start Time</option>
+                            List<string> chosentimeslots = new List<string>();
+                            if(dateslots.Count == 0)
+                            {
+                                chosentimeslots = timeslots.ToList();
+                            }
+                            else
+                            {
+                                for (var i = 0; i < dateslots.Count; i++)
+                                {
+                                    if (booking.BookDTOut.Value.Date == dateslots[i])
+                                    {
+                                        chosentimeslots = availtimeslots[i].ToList();
+                                        break;
+                                    }
+                                    else if (i + 1 < dateslots.Count)
+                                    {
+                                        if (booking.BookDTOut.Value.Date > dateslots[i] && booking.BookDTOut.Value.Date < dateslots[i + 1] && availtimeslots[i].Last() == timeslots.Last() && availtimeslots[i + 1][0] == timeslots[0])
+                                        {
+                                            chosentimeslots = timeslots.ToList();
+                                            break;
+                                        }
+                                    }
+                                    else if (booking.BookDTOut.Value.Date < dateslots[0] && chosenOutletID == startOutletID)
+                                    {
+                                        chosentimeslots = timeslots.ToList();
+                                        break;
+                                    }
+                                    else if (booking.BookDTOut.Value.Date > dateslots.Last() && chosenOutletID == returnoutletIDs.Last())
+                                    {
+                                        chosentimeslots = timeslots.ToList();
+                                        break;
+                                    }
+                                }
+                            }
+                            if (chosentimeslots.Count == 0)
+                            {
+                                datetimemessage = "Your date and time is out of the available range. Please check other Outlets to see if this vehicle is available at this time";
+                            }
+                            else
+                            {
+                                datetimemessage = "";
+                            }
+                            for (var i = 0;i<chosentimeslots.Count-1;i++)
+                            {
+                                if(i+1<chosentimeslots.Count)
+                                {
+                                    if (int.Parse(chosentimeslots[i].Replace(":00", "")) + 1 == int.Parse(chosentimeslots[i + 1].Replace(":00", "")))
+                                    {
+                                        <option value="@chosentimeslots[i]">@chosentimeslots[i]</option>
+                                    }
+                                }
+                            }
+                            if(chosentimeslots.Contains(timeslots.Last()) && booking.BookDTIn > booking.BookDTOut)
+                            {
+                                <option value="@chosentimeslots.Last()">@chosentimeslots.Last()</option>
+                            }
+                        }
+                        else
+                        {
+                            <option>@(booking.BookDTOut.Value.TimeOfDay.Hours+":00")</option>
+                        }
+                        <ValidationMessage For="@(() => stringstarttime)" />
+                    </InputSelect>
+                </div>
+            </div>
+
+            if (booking.BookType == "Per Day")
+            {
+                if (booking.BookDTIn.Value.Date < booking.BookDTOut.Value.Date)
+                {
+                    booking.BookDTIn = booking.BookDTOut;
+                }
+                <div class="form-group">
+                    <label>End Date: </label>
+                    <div>
+                        <InputDate @oninput="checkAvailable" @bind-Value="@booking.BookDTIn" class="form-control" />
+                        <ValidationMessage For="@(() => booking.BookDTIn)" />
+                    </div>
+                </div>
+            }
+
+            <div class="form-group">
+                <label>End Time: </label>
+                <div>
+                    @* Algorithm to show the available times of a chosen end date *@
+                    <InputSelect @bind-Value="@stringendtime" class="form-control">
+                        @if (booking.BookDTOut != null && booking.BookDTIn != null && stringstarttime != null && !Disabled)
+                        {
+                            <option value="0:00">Select End Time</option>
+                            List<string> chosentimeslots = new List<string>();
+                            if (dateslots.Count == 0)
+                            {
+                                chosentimeslots = timeslots.ToList();
+                            }
+                            else
+                            {
+                                for (var i = 0; i < dateslots.Count; i++)
+                                {
+                                    if (booking.BookDTOut.Value.Date == dateslots[i] && booking.BookDTIn.Value.Date == dateslots[i])
+                                    {
+                                        chosentimeslots = availtimeslots[i].ToList();
+                                        break;
+                                    }
+                                    else if (i + 1 < dateslots.Count)
+                                    {
+                                        if (booking.BookDTOut.Value.Date >= dateslots[i] && booking.BookDTOut.Value.Date < dateslots[i + 1] && booking.BookDTIn.Value.Date > dateslots[i] && booking.BookDTIn.Value.Date < dateslots[i + 1] && availtimeslots[i].Last() == timeslots.Last() && availtimeslots[i + 1][0] == timeslots[0])
+                                        {
+                                            chosentimeslots = timeslots.ToList();
+                                            break;
+                                        }
+                                    }
+                                    else if (booking.BookDTOut.Value.Date < dateslots[0] && booking.BookDTIn.Value.Date < dateslots[0] && chosenOutletID == startOutletID)
+                                    {
+                                        chosentimeslots = timeslots.ToList();
+                                        break;
+                                    }
+                                    else if (booking.BookDTOut.Value.Date >= dateslots.Last() && booking.BookDTIn.Value.Date > dateslots.Last() && chosenOutletID == returnoutletIDs.Last())
+                                    {
+                                        chosentimeslots = timeslots.ToList();
+                                        break;
+                                    }
+                                }
+                            }
+                            var intstarttime = int.Parse(stringstarttime.Replace(":00", ""));
+                            int currtime = 0;
+                            foreach (var slot in timeslots)
+                            {
+                                if (chosentimeslots.Contains(slot) && (int.Parse(slot.Replace(":00", ""))) >= intstarttime)
+                                {
+                                    if (booking.BookDTOut.Value.Date <= booking.BookDTIn.Value.Date)
+                                    {
+                                        currtime = int.Parse(slot.Replace(":00", ""));
+                                        break;
+                                    }
+                                }
+                            }
+                            if(chosentimeslots.Count == 0)
+                            {
+                                datetimemessage = "Your date and time is out of the available range. Please check other Outlets to see if this vehicle is available at this time";
+                            }
+                            else
+                            {
+                                datetimemessage = "";
+                            }
+                            if (chosentimeslots.Count > 0)
+                            {
+                                if (booking.BookDTOut.Value.Date < booking.BookDTIn.Value.Date)
+                                {
+                                    <option value="@chosentimeslots[0]">@chosentimeslots[0]</option>
+                                }
+                            }
+                            for (var i = 1; i < chosentimeslots.Count; i++)
+                            {
+                                if (int.Parse(chosentimeslots[i].Replace(":00", "")) - currtime <= 1 && (int.Parse(chosentimeslots[i].Replace(":00", "")) > intstarttime || booking.BookDTOut.Value.Date < booking.BookDTIn.Value.Date))
+                                {
+                                    <option value="@chosentimeslots[i]">@chosentimeslots[i]</option>
+                                    currtime++;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <option>@(booking.BookDTIn.Value.TimeOfDay.Hours + ":00")</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => stringendtime)" />
+                    <div><p style="color:red;">@datetimemessage</p></div>
+                    <div>
+                        <a @onclick="checkAvailable" class="btn btn-outline-dark btn-block">Check Available</a>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (stringstarttime != null && stringendtime != null)
+        {
+            <div>
+                @if (booking.BookType == "Per Day")
+                {
+                    booking.BookCost = (((booking.BookDTIn.Value.Date - booking.BookDTOut.Value.Date).Days+1) * cost).ToString();
+                }
+                else if (booking.BookType == "Per Hour")
+                {
+                    booking.BookCost = ((int.Parse(stringendtime.Replace(":00", "")) - int.Parse(stringstarttime.Replace(":00", ""))) * cost).ToString();
+                }
+                <p>Total Cost: $@booking.BookCost</p>
+            </div>
+
+            <div class="form-group">
+                <label>Comments: </label>
+                <div>
+                    <InputText @bind-Value="@booking.BookComments" class="form-control" />
+                    <ValidationMessage For="@(() => booking.BookComments)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Need Chauffeur?: </label>
+                <div>
+                    <InputSelect @bind-Value="Chauffeur" class="form-control">
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </InputSelect>
+                </div>
+            </div>
+
+            @if (Staffs != null)
+            {
+                if (Chauffeur == "yes")
+                {
+                    ChauffeurIDList.Clear();
+                    foreach (var staff in Staffs)
+                    {
+                        if (staff.StaffRole == "Chauffeur" && staff.StaffStatus == "Available")
+                        {
+                            booking.StaffID = staff.ID;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    booking.StaffID = null;
+                }
+                if (booking.StaffID != null)
+                {
+                    foreach (var staff in Staffs)
+                    {
+                        if (booking.StaffID == staff.ID)
+                        {
+                            <p>@Staffs[Staffs.IndexOf(staff)].StaffName</p>
+                        }
+                    }
+                }
+            }
+        }
+    </fieldset>
+
+    @if (!Disabled && stringendtime != null)
+    {
+        <button type="submit" @onclick="combineDateTime" class="btn btn-success btn-block">
+            @ButtonText
+        </button>
+    }
+    <BackToList Target="bookings" />
+</EditForm>
+
+@code {
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public Booking? booking { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Save";
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+
+    private IList<Vehicle>? Vehicles;
+    private IList<Staff>? Staffs;
+    private IList<Outlet>? Outlets;
+    private IList<Model>? Models;
+    private IList<Booking>? Bookings;
+    private IList<Customer>? Customers;
+
+    private string datetimemessage = "";
+    private double? cost;
+    private int? chosenMCID;
+    private int? chosenOutletID;
+    private int? chosenModelID;
+    private string? stringstarttime;
+    private string? stringendtime;
+    private string[] timeslots = {"9:00", "10:00", "11:00", "12:00","13:00", "14:00", "15:00", "16:00","17:00", "18:00", "19:00", "20:00","21:00", "22:00"};
+
+    private List<int> vehmodelIDs = new List<int>();
+    private List<int> vehmcIDs = new List<int>();
+    private List<int> vehvehicleIDs = new List<int>();
+    private List<DateTime> startdates = new List<DateTime>();
+    private List<DateTime> enddates = new List<DateTime>();
+    private List<int> starttimes = new List<int>();
+    private List<int> endtimes = new List<int>();
+    private List<int> returnoutletIDs = new List<int>();
+    private List<int> vehicleIDs = new List<int>();
+    private List<int> modelIDs = new List<int>();
+    private List<int> mcIDs = new List<int>();
+    private List<string> mcNames = new List<string>();
+    private List<string> vehicleplatenums = new List<string>();
+    private List<int> startoutletIDs = new List<int>();
+
+    private List<int> ChauffeurIDList = new List<int>();
+    private string Chauffeur = "no";
+
+    private async Task combineDateTime()//Extracts the stringstarttime and stringendtime from the option menu and merge it with Date.
+    {
+        if(Staffs != null && booking != null)
+        {
+            foreach (var staff in Staffs)
+            {
+                if (staff.ID == booking.StaffID)
+                {
+                    staff.StaffStatus = "Unavailable";
+                    await _client.PutAsJsonAsync($"{Endpoints.StaffsEndpoint}/{staff.ID}", staff);
+                }
+            }
+        }
+        if (stringstarttime != null && stringendtime != null && booking.BookDTIn != null && booking.BookDTOut != null)
+        {
+            var starttime = TimeSpan.Parse(stringstarttime);
+            var endtime = TimeSpan.Parse(stringendtime);
+            booking.BookDTIn = booking.BookDTIn.Value.Date + endtime;
+            booking.BookDTOut = booking.BookDTOut.Value.Date + starttime;
+        }
+    }
+
+    private bool disableenddate = false;
+    private List<string[]> availtimeslots = new List<string[]>();
+    private List<DateTime> dateslots = new List<DateTime>();
+
+    int startOutletID = 0; 
+
+    private void checkAvailable() //Algorithm to filter out unavailable date and time depending on chosen vehicle and outlet. Creates a list of dates and list of time ranges that are available.
+    {
+        if (booking != null && Vehicles != null)
+        {
+            foreach (var vehicle in Vehicles)
+            {
+                if (booking.VehID == vehicle.ID)
+                {
+                    startOutletID = vehicle.OutletID ?? 0;
+                    break;
+                }
+            }
+        }
+        availtimeslots.Clear();
+        dateslots.Clear();
+        int curroutletID = startOutletID;
+        if (booking != null)
+        {
+            if (booking.BookDTOut != null && booking.BookDTIn != null)
+            {
+                var slots = new List<string>();
+                var prevslots = new List<string>();
+                if(chosenOutletID == startOutletID)
+                {
+                    slots = timeslots.ToList();
+                }
+                else
+                {
+                    slots.Clear();
+                }
+                for (var i = 0; i < startdates.Count; i++)
+                {
+                    if (booking.VehID == vehicleIDs[i])
+                    {
+                        if (chosenOutletID == curroutletID)
+                        {
+                            prevslots = slots;
+                            if (!dateslots.Contains(startdates[i]))
+                            {
+                                dateslots.Add(startdates[i]);
+                            }
+                            for (var id = int.Parse(prevslots[0].Replace(":00", "")); id <= int.Parse(prevslots.Last().Replace(":00", "")); id++)
+                            {
+                                if (id > starttimes[i])
+                                {
+                                    slots.Remove(id + ":00");
+                                }
+                            }
+                            if (!Equals(startdates[i],enddates[i]))
+                            {
+                                availtimeslots.Add(slots.ToArray());
+                                slots.Clear();
+                            }
+                        }
+                        if (chosenOutletID == returnoutletIDs[i])
+                        {
+                            if (!dateslots.Contains(enddates[i]))
+                            {
+                                dateslots.Add(enddates[i]);
+                            }
+                            foreach (var slot in timeslots)
+                            {
+                                var intslot = int.Parse(slot.Replace(":00", ""));
+                                if (intslot >= endtimes[i] && !slots.Contains(slot))
+                                {
+                                    slots.Add(slot);
+                                }
+                            }
+                            if (i + 1 < startdates.Count)
+                            {
+                                if (!Equals(startdates[i + 1],enddates[i]))
+                                {
+                                    availtimeslots.Add(slots.ToArray());
+                                    slots = timeslots.ToList();
+                                }
+                            }
+                        }
+                        curroutletID = returnoutletIDs[i];
+                    }
+                }
+                availtimeslots.Add(slots.ToArray());
+            }
+        }
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        Vehicles = await _client.GetFromJsonAsync<List<Vehicle>>($"{Endpoints.VehiclesEndpoint}");
+        Staffs = await _client.GetFromJsonAsync<List<Staff>>($"{Endpoints.StaffsEndpoint}");
+        Outlets = await _client.GetFromJsonAsync<List<Outlet>>($"{Endpoints.OutletsEndpoint}");
+        Models = await _client.GetFromJsonAsync<List<Model>>($"{Endpoints.ModelsEndpoint}");
+        Bookings = await _client.GetFromJsonAsync<List<Booking>>($"{Endpoints.BookingsEndpoint}");
+        Customers = await _client.GetFromJsonAsync<List<Customer>>($"{Endpoints.CustomersEndpoint}");
+        
+        if (Bookings != null)
+        {
+            var sortedBookings = Bookings.OrderBy(x => x.BookDTOut.Value);
+            foreach (var bk in sortedBookings)
+            {
+                modelIDs.Add(bk.Vehicle.ModelColour.ModelID ?? 0);
+                mcIDs.Add(bk.Vehicle.MCID ?? 0);
+                mcNames.Add(bk.Vehicle.ModelColour.MCName);
+                startdates.Add(bk.BookDTOut.Value.Date);
+                enddates.Add(bk.BookDTIn.Value.Date);
+                starttimes.Add(bk.BookDTOut.Value.TimeOfDay.Hours);
+                endtimes.Add(bk.BookDTIn.Value.TimeOfDay.Hours);
+                returnoutletIDs.Add(bk.OutletExReturn ?? 0);
+                vehicleplatenums.Add(bk.Vehicle.VehPlateNum);
+                vehicleIDs.Add(bk.VehID ?? 0);
+            }
+        }
+    }
+}

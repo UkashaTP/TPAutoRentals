@@ -1,0 +1,53 @@
+﻿@page "/aboutus"
+@inject HttpClient _client
+
+<PageTitle>Contact</PageTitle>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/contactstyle.css" rel="stylesheet" />
+</head>
+<body>
+
+<div class="about-section">
+  <h1>About Us Page</h1>
+  <p>We are the Managers of TPAutoRentals.</p>
+
+</div>
+
+<h2 style="text-align:center">Our Managers</h2>
+<div class="row">
+
+@if(Staffs != null)
+{
+    foreach (var staff in Staffs)
+    {
+        if (staff.StaffRole == "Manager")
+        {
+            <div class="column">
+                <div class="card">
+                            <img src="Images/@staff.StaffProfileImage" alt="@staff.StaffProfileImage" style="width:200px;">
+                    <div class="container">
+                        <h2>@staff.StaffName</h2>
+                        <p class="title">@staff.StaffRole</p>
+                        <p>Branch: @staff.Outlet.OutletAddress</p>
+                        <p>Username: @staff.StaffUsername</p>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+}
+</div>
+
+</body>
+
+@code {
+    private List<Staff>? Staffs;
+    private string defaultimg = "noimg.jpeg";
+
+    protected async override Task OnInitializedAsync()
+    {
+        Staffs = await _client.GetFromJsonAsync<List<Staff>>($"{Endpoints.StaffsEndpoint}");
+    }
+}

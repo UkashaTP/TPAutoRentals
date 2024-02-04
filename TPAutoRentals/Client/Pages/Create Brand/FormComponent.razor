@@ -1,0 +1,183 @@
+﻿@using System.Net.Http.Headers
+@using System.Text.Json
+@inject HttpClient Http
+@inject HttpClient _client
+@inject IJSRuntime js
+@inject NavigationManager NavManager
+
+<EditForm Model="@brand" OnValidSubmit="@OnValidSubmit">
+    @if(staffisvalid)
+    {
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <fieldset disabled="@Disabled">
+
+            <div class="form-group">
+                <label>Brand Name: </label>
+                <div>
+                    <InputText @bind-Value="@brand.BrandName" class="form-control" />
+                    <ValidationMessage For="@(() => brand.BrandName)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Brand Country: </label>
+                <div>
+                    <InputText @bind-Value="@brand.BrandCountry" class="form-control" />
+                    <ValidationMessage For="@(() => brand.BrandCountry)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Brand Contact Number: </label>
+                <div>
+                    <InputText @bind-Value="@brand.BrandContactNumber" class="form-control" />
+                    <ValidationMessage For="@(() => brand.BrandContactNumber)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Brand Link: </label>
+                <div>
+                    <InputText @bind-Value="@brand.BrandWebLink" class="form-control" />
+                    <ValidationMessage For="@(() => brand.BrandWebLink)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Brand Icon: </label>
+                <div>
+                    <InputFile OnChange="@UploadFile" />
+                    <img src="Images/@brand.BrandIcon" alt="@brand.BrandName" width="200" />
+                </div>
+            </div>
+        </fieldset>
+
+        @if (!Disabled)
+        {
+            <button type ="submit" class="btn btn-success btn-block">
+                @ButtonText
+            </button>
+
+            @if(brand.ID != 0)
+            {
+                <a class="btn btn-danger" @onclick="@(()=>Delete(brand.ID))">
+                    Delete Brand
+                </a>
+            }
+        }
+    }
+    else
+    {
+        @*Staff verification for authorization to create/edit/delete brands*@
+        <header>Please Log in as Staff to access this</header>
+
+        <div class="form-group">
+            <label>Enter Staff Name: </label>
+            <div>
+                <InputText @bind-Value="@staffusername" class="form-control" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Enter Staff Password: </label>
+            <div>
+                <InputText @bind-Value="@staffpassword" class="form-control" />
+            </div>
+        </div>
+
+        @if (showError)
+        {
+            <p style="color: red;">Wrong Username or Password. Please try again</p>
+        }
+
+        <a @onclick="CheckValidation" type="submit" class="btn btn-success btn-block">
+            Enter PIN
+        </a>
+    }
+    <BackToList Target="createbrand" />
+</EditForm>
+
+@code {
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public Brand? brand { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Save";
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+
+    private string imagePreviewUrl = "";
+
+    protected async override Task OnInitializedAsync()
+    {
+        Staffs = await _client.GetFromJsonAsync<List<Staff>>($"{Endpoints.StaffsEndpoint}");
+    }
+
+    private async Task UploadFile(InputFileChangeEventArgs e) //Upload an image and store it into wwwroot/Images folder
+    {
+        foreach (var imageFile in e.GetMultipleFiles(1))
+        {
+            try
+            {
+                var content = new MultipartFormDataContent();
+                var fileContent = new StreamContent(imageFile.OpenReadStream(maxFileSize));
+                content.Add(fileContent, "file", imageFile.Name);
+
+                var response = await _client.PostAsync("api/FileUpload", content);
+                if (response.IsSuccessStatusCode)
+                {
+                    brand.BrandIcon = imageFile.Name; 
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Upload failed: {ex.Message}");
+            }
+        }
+    }
+
+    private long maxFileSize = 1024 * 1024 * 15; // 15 MB
+
+    async Task Delete(int brandID)
+    {
+        if (brand != null)
+        {
+            var confirm = await js.InvokeAsync<bool>("confirm", $"Do you want to delete {brand.BrandName}?");
+
+            if (confirm)
+            {
+                var response = await _client.DeleteAsync($"{Endpoints.BrandsEndpoint}/{brandID}");
+                await OnInitializedAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    NavManager.NavigateTo("/createbrand/");
+                }
+            }
+        }
+    }
+
+    private List<Staff>? Staffs;
+
+    private string? staffusername;
+    private string? staffpassword;
+    private bool showError = false;
+    private bool staffisvalid = false;
+
+
+    private void CheckValidation() //Authorise staff only to access the edit and create feature
+    {
+
+        if (Staffs != null)
+        {
+            foreach (var staff in Staffs)
+            {
+                if (staffusername == staff.StaffName && staffpassword == staff.StaffPassword)
+                {
+                    staffisvalid = true;
+                }
+                else
+                {
+                    showError = true;
+                }
+            }
+        }
+    }
+}

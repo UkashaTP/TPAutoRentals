@@ -1,0 +1,127 @@
+﻿@page "/bookings/view/{id:int}"
+@inject HttpClient _client
+@inject NavigationManager _navManager
+@inject IJSRuntime js
+
+@if (staffisvalid)
+{
+    if (booking != null && Bookings != null)
+    {
+        <h3>View Booking</h3>
+        @*Display bookings*@
+        foreach (var bk in Bookings)
+        {
+            if (bk.ID == booking.ID)
+            {
+                <div><p>Booked By: @bk.Customer.CusName</p></div>
+                <div><p>Booked Vehicle: @(bk.Vehicle.ModelColour.Model.Brand.BrandName + " " + bk.Vehicle.ModelColour.Model.ModelName + " - " + bk.Vehicle.ModelColour.MCName)</p></div>
+                <div><p>License Plate: @bk.Vehicle.VehPlateNum</p></div>
+                <div><p>Payment Method: @bk.BookPayment</p></div>
+                <div><p>Booking Type: @bk.BookType</p></div>
+                <div><p>Start Date: @bk.BookDTOut.ToString()</p></div>
+                <div>End Date: @bk.BookDTIn.ToString()</div>
+                <div>Cost: $@bk.BookCost</div>
+                <div>Status: @bk.BookStatus</div>
+                <div>Return Outlet: @bk.Outlet.OutletAddress</div>
+                if (bk.Staff != null)
+                {
+                    <div>Chauffeur: @bk.Staff.StaffName</div>
+                }
+                break;
+            }
+        }
+        @*Delete booking*@
+        <a class="btn btn-danger" @onclick="@(()=>Delete(booking.ID))">
+            Delete Booking
+        </a>
+    }
+}
+else
+{
+    @*Allow staff to log in to access bookings*@
+    <header>Please Log in as Staff to access this</header>
+
+    <div class="form-group">
+        <label>Enter Staff Name: </label>
+        <div>
+            <InputText @bind-Value="@staffusername" class="form-control" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Enter Staff Password: </label>
+        <div>
+            <InputText @bind-Value="@staffpassword" class="form-control" />
+        </div>
+    </div>
+
+    @if (showError)
+    {
+        <p style="color: red;">Wrong Username or Password. Please try again</p>
+    }
+
+    <a @onclick="CheckValidation" type="submit" class="btn btn-success btn-block">
+        Enter PIN
+    </a>
+}
+<BackToList Target="bookings" />
+
+
+
+@code {
+    [Parameter] public int id { get; set; }
+    Booking? booking = new Booking();
+    private IList<Booking>? Bookings = new List<Booking>();
+
+    protected async override Task OnParametersSetAsync()
+    {
+        Staffs = await _client.GetFromJsonAsync<List<Staff>>($"{Endpoints.StaffsEndpoint}");
+        booking = await _client.GetFromJsonAsync<Booking>($"{Endpoints.BookingsEndpoint}/{id}");
+        Bookings = await _client.GetFromJsonAsync<List<Booking>>($"{Endpoints.BookingsEndpoint}");
+    }
+
+    async Task Delete(int bookingID)
+    {
+        if (booking != null)
+        {
+            var confirm = await js.InvokeAsync<bool>("confirm", $"Do you want to delete {booking.ID}?");
+
+            if (confirm)
+            {
+                var response = await _client.DeleteAsync($"{Endpoints.BookingsEndpoint}/{bookingID}");
+                await OnInitializedAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    _navManager.NavigateTo("/bookings/");
+                }
+            }
+        }
+    }
+
+    private List<Staff>? Staffs;
+
+    private string? staffusername;
+    private string? staffpassword;
+    private bool showError = false;
+    private bool staffisvalid = false;
+
+
+    private void CheckValidation()
+    {
+
+        if (Staffs != null)
+        {
+            foreach (var staff in Staffs)
+            {
+                if (staffusername == staff.StaffName && staffpassword == staff.StaffPassword)
+                {
+                    staffisvalid = true;
+                }
+                else
+                {
+                    showError = true;
+                }
+            }
+        }
+    }
+}

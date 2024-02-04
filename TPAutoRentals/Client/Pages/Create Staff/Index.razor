@@ -1,0 +1,171 @@
+﻿@page "/staffs/"
+@inject HttpClient _client
+@inject IJSRuntime js
+@attribute [Authorize]
+
+<PageTitle>Staffs</PageTitle>
+
+@if(staffisvalid)
+{
+    <h3 class="card-title">Car Staffs</h3>
+    <a href="/createstaffs/create" class="btn btn-secondary">
+        <span class="oi oi-plus"></span>
+        Create New Staff
+    </a>
+    <br />
+    <br />
+    <div class="form-group">
+        @* Search bar to search for staff *@
+        <label>Search: </label>
+        <div>
+            <InputText @bind-Value="@keyword" class="form-control" />
+        </div>
+    </div>
+    if (Staffs == null)
+    {
+        <div class="alert alert-info">Loading Staffs</div>
+    }
+    else
+    {
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th>Profile Picture</th>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Staff Role</th>
+                    <th>Staff Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var staff in Staffs)
+                {
+                    if (staff.StaffName.ToLower().Contains(keyword) || staff.StaffUsername.ToLower().Contains(keyword) || staff.StaffRole.ToLower().Contains(keyword) || staff.StaffStatus.ToLower().Contains(keyword))
+                    {
+                        <tr>
+                            <td>
+                                @if (staff.StaffProfileImage == null)
+                                {
+                                    <img src="Images/nopfp.png" alt="Image Unavailable" height="50" width="auto">
+                                }
+                                else
+                                {
+                                    <img src="Images/@staff.StaffProfileImage" alt="@staff.StaffProfileImage" height="50" width="auto">
+                                }
+                        </td>
+                        <td>@staff.StaffName</td>
+                        <td>@staff.StaffUsername</td>
+                        <td>@staff.StaffRole</td>
+                        <td>@staff.StaffStatus</td>
+                        <td>
+                            <a href="/staffs/view/@staff.ID" class="btn btn-primary">
+                                <span class="oi oi-book"></span>
+                            </a>
+                            <a href="/staffs/edit/@staff.ID" class="btn btn-warning">
+                                <span class="oi oi-pencil"></span>
+                            </a>
+                            <button class="btn btn-danger" @onclick="@(()=>Delete(staff.ID))">
+                                <span class="oi oi-delete"></span>
+                            </button>
+                        </td>
+                    </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+}
+else
+{
+    @*Manager verification for authorization to view/create/edit/delete Staff*@
+    <header>Please Log in as Manager to access this</header>
+
+    <div class="form-group">
+        <label>Enter Staff Name: </label>
+        <div>
+            <InputText @bind-Value="@staffusername" class="form-control" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Enter Staff Password: </label>
+        <div>
+            <InputText @bind-Value="@staffpassword" class="form-control" />
+        </div>
+    </div>
+
+    @if (showError)
+    {
+        <p style="color: red;">Wrong Username or Password. Please try again</p>
+    }
+    else if (wrongroleError)
+    {
+        <p style="color: red;">This staff does not meet the access level</p>
+    }
+
+    <button @onclick="CheckValidation" type="submit" class="btn btn-success btn-block">
+        Enter PIN
+    </button>
+}
+
+
+@code {
+    private List<Staff>? Staffs;
+
+    private string? staffusername;
+    private string? staffpassword;
+    private bool showError = false;
+    private bool wrongroleError = false;
+    private bool staffisvalid = false;
+    private string keyword = "";
+
+
+    private void CheckValidation()
+    {
+
+        if (Staffs != null)
+        {
+            foreach (var staff in Staffs)
+            {
+                if (staffusername == staff.StaffName && staffpassword == staff.StaffPassword && staff.StaffRole == "Manager")
+                {
+                    staffisvalid = true;
+                }
+
+                else if (staffusername == staff.StaffName && staffpassword == staff.StaffPassword)
+                {
+                    wrongroleError = true;
+                    showError = false;
+                }
+
+                else
+                {
+                    showError = true;
+                    wrongroleError = false;
+                }
+            }
+        }
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        Staffs = await _client.GetFromJsonAsync<List<Staff>>($"{Endpoints.StaffsEndpoint}");
+    }
+
+    async Task Delete(int staffID)
+    {
+        if (Staffs != null)
+        {
+            var staff = Staffs.First(q => q.ID == staffID);
+
+            var confirm = await js.InvokeAsync<bool>("confirm", $"Do you want to delete {staff.StaffName}?");
+
+            if (confirm)
+            {
+                await _client.DeleteAsync($"{Endpoints.StaffsEndpoint}/{staffID}");
+                await OnInitializedAsync();
+            }
+        }
+    }
+}

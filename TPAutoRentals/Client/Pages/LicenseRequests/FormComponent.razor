@@ -1,0 +1,85 @@
+﻿@inject HttpClient _client
+
+<EditForm Model="@licenserequest" OnValidSubmit="@OnValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label>Pick Customer: </label>
+        <div>
+
+        </div>
+        <div>
+            <InputSelect @bind-Value="licenserequest.CusID" class="form-control">
+                <option value="">-- Select Customer --</option>
+                @if (Customers != null)
+                {
+                    foreach (var cus in Customers)
+                    {
+                        if(cus.CusLicenseClass == "NO LICENSE")
+                        {
+                            <option value="@cus.ID">@(cus.CusName)</option>
+                        }
+                    }
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => licenserequest.CusID)" />
+        </div>
+    </div>
+
+    <InputFile OnChange="UploadFile" />
+    <img src="Images/@licenserequest.LReqImage" alt="Image preview" style="max-width: 300px; height: auto;" />
+
+    @if (!Disabled)
+    {
+        <button type="submit" @onclick="setLReqStatus" class="btn btn-success btn-block">@ButtonText</button>
+    }
+
+
+
+</EditForm>
+
+@code {
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public LicenseRequest licenserequest { get; set; } = new LicenseRequest(); // Ensure it's initialized
+    [Parameter] public string ButtonText { get; set; } = "Save";
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+
+    private IList<Customer>? Customers = new List<Customer>();
+
+    private void setLReqStatus()
+    {
+        licenserequest.LReqStatus = "PENDING";
+    }
+
+    private async Task UploadFile(InputFileChangeEventArgs e)
+    {
+        foreach (var imageFile in e.GetMultipleFiles(1))
+        {
+            try
+            {
+                var content = new MultipartFormDataContent();
+                var fileContent = new StreamContent(imageFile.OpenReadStream(maxFileSize));
+                content.Add(fileContent, "file", imageFile.Name);
+
+                var response = await _client.PostAsync("api/FileUpload", content);
+                if (response.IsSuccessStatusCode)
+                {
+                    licenserequest.LReqImage = imageFile.Name;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Upload failed: {ex.Message}");
+            }
+        }
+    }
+
+    private long maxFileSize = 1024 * 1024 * 15;
+
+    protected async override Task OnInitializedAsync()
+    {
+        Customers = await _client.GetFromJsonAsync<List<Customer>>($"{Endpoints.CustomersEndpoint}");
+    }
+}
+
